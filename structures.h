@@ -84,4 +84,11 @@ struct Assignment {
     Assignment(int c = -1, int r = -1, TimeSlot ts = TimeSlot());
 };
 
+struct SchedulingData {
+    std::vector<Lecturer> lecturers;
+    std::vector<StudentGroup> groups;
+    std::vector<Room> rooms;
+    std::vector<Course> courses;
+};
+
 #endif //STRUCTURES_H

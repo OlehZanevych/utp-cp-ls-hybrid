@@ -4,16 +4,8 @@
 #include <random>
 #include <string>
 #include <vector>
-#include <unordered_set>
-#include <algorithm>
 
-// Data generation structure to hold all generated entities
-struct SchedulingData {
-    std::vector<Lecturer> lecturers;
-    std::vector<StudentGroup> groups;
-    std::vector<Room> rooms;
-    std::vector<Course> courses;
-};
+#include "structures.h"
 
 class SchedulingDataGenerator {
 private:
