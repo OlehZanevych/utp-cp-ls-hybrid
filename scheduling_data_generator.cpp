@@ -5,9 +5,6 @@
 #include <algorithm>
 
 #include "structures.h"
-#include "schedule.h"
-#include "constraint_checker.h"
-#include "adaptive_neighborhood_selector.h"
 
 #include "scheduling_data_generator.h"
 
