@@ -4,6 +4,9 @@
 #include <random>
 #include <string>
 #include <vector>
+#include <unordered_set>
+#include <algorithm>
+#include <chrono>
 
 #include "structures.h"
 

@@ -1,9 +1,9 @@
-#ifndef SCHEDULING_JSON_H
-#define SCHEDULING_JSON_H
+#ifndef SCHEDULING_DATA_SERIALIZATION_H
+#define SCHEDULING_DATA_SERIALIZATION_H
 
-#include <nlohmann/json.hpp>
 #include <fstream>
 #include <iostream>
+#include <nlohmann/json.hpp>
 #include "structures.h"
 #include "schedule.h"
 
@@ -12,19 +12,19 @@ using json = nlohmann::json;
 // JSON conversion functions for each structure
 
 // TimeSlot serialization
-void to_json(json& j, const TimeSlot& ts) {
+void to_json(json &j, const TimeSlot &ts) {
     j = json{{"day", ts.day}, {"period", ts.period}};
 }
 
-void from_json(const json& j, TimeSlot& ts) {
+void from_json(const json &j, TimeSlot &ts) {
     j.at("day").get_to(ts.day);
     j.at("period").get_to(ts.period);
 }
 
 // Lecturer serialization
-void to_json(json& j, const Lecturer& lecturer) {
+void to_json(json &j, const Lecturer &lecturer) {
     json undesirable_slots_array = json::array();
-    for (const auto& slot : lecturer.undesirable_slots) {
+    for (const auto &slot: lecturer.undesirable_slots) {
         undesirable_slots_array.push_back(slot);
     }
 
@@ -36,7 +36,7 @@ void to_json(json& j, const Lecturer& lecturer) {
     };
 }
 
-void from_json(const json& j, Lecturer& lecturer) {
+void from_json(const json &j, Lecturer &lecturer) {
     // Create a new lecturer with required constructor parameters
     int id = j.at("id").get<int>();
     std::string name = j.at("name").get<std::string>();
@@ -47,16 +47,16 @@ void from_json(const json& j, Lecturer& lecturer) {
 
     // Clear and populate undesirable_slots
     lecturer.undesirable_slots.clear();
-    for (const auto& slot_json : j.at("undesirable_slots")) {
+    for (const auto &slot_json: j.at("undesirable_slots")) {
         TimeSlot slot = slot_json.get<TimeSlot>();
         lecturer.undesirable_slots.insert(slot);
     }
 }
 
 // StudentGroup serialization
-void to_json(json& j, const StudentGroup& group) {
+void to_json(json &j, const StudentGroup &group) {
     json undesirable_slots_array = json::array();
-    for (const auto& slot : group.undesirable_slots) {
+    for (const auto &slot: group.undesirable_slots) {
         undesirable_slots_array.push_back(slot);
     }
 
@@ -69,7 +69,7 @@ void to_json(json& j, const StudentGroup& group) {
     };
 }
 
-void from_json(const json& j, StudentGroup& group) {
+void from_json(const json &j, StudentGroup &group) {
     // Create a new group with required constructor parameters
     int id = j.at("id").get<int>();
     std::string name = j.at("name").get<std::string>();
@@ -81,14 +81,14 @@ void from_json(const json& j, StudentGroup& group) {
 
     // Clear and populate undesirable_slots
     group.undesirable_slots.clear();
-    for (const auto& slot_json : j.at("undesirable_slots")) {
+    for (const auto &slot_json: j.at("undesirable_slots")) {
         TimeSlot slot = slot_json.get<TimeSlot>();
         group.undesirable_slots.insert(slot);
     }
 }
 
 // Course serialization
-void to_json(json& j, const Course& course) {
+void to_json(json &j, const Course &course) {
     j = json{
         {"id", course.id},
         {"name", course.name},
@@ -100,7 +100,7 @@ void to_json(json& j, const Course& course) {
     };
 }
 
-void from_json(const json& j, Course& course) {
+void from_json(const json &j, Course &course) {
     // Create a new course with required constructor parameters
     int id = j.at("id").get<int>();
     std::string name = j.at("name").get<std::string>();
@@ -111,14 +111,14 @@ void from_json(const json& j, Course& course) {
     course = Course(id, name, lecturer_id, duration, weekly_meetings);
 
     // Set vectors
-    course.group_ids = j.at("group_ids").get<std::vector<int>>();
-    course.required_features = j.at("required_features").get<std::vector<int>>();
+    course.group_ids = j.at("group_ids").get<std::vector<int> >();
+    course.required_features = j.at("required_features").get<std::vector<int> >();
 }
 
 // Room serialization
-void to_json(json& j, const Room& room) {
+void to_json(json &j, const Room &room) {
     json features_array = json::array();
-    for (const auto& feature : room.features) {
+    for (const auto &feature: room.features) {
         features_array.push_back(feature);
     }
 
@@ -130,7 +130,7 @@ void to_json(json& j, const Room& room) {
     };
 }
 
-void from_json(const json& j, Room& room) {
+void from_json(const json &j, Room &room) {
     // Create a new room with required constructor parameters
     int id = j.at("id").get<int>();
     std::string name = j.at("name").get<std::string>();
@@ -140,13 +140,13 @@ void from_json(const json& j, Room& room) {
 
     // Clear and populate features
     room.features.clear();
-    for (const auto& feature : j.at("features")) {
+    for (const auto &feature: j.at("features")) {
         room.features.insert(feature.get<int>());
     }
 }
 
 // Assignment serialization
-void to_json(json& j, const Assignment& assignment) {
+void to_json(json &j, const Assignment &assignment) {
     j = json{
         {"course_id", assignment.course_id},
         {"room_id", assignment.room_id},
@@ -154,14 +154,14 @@ void to_json(json& j, const Assignment& assignment) {
     };
 }
 
-void from_json(const json& j, Assignment& assignment) {
+void from_json(const json &j, Assignment &assignment) {
     assignment.course_id = j.at("course_id").get<int>();
     assignment.room_id = j.at("room_id").get<int>();
     assignment.time_slot = j.at("time_slot").get<TimeSlot>();
 }
 
 // SchedulingData serialization
-void to_json(json& j, const SchedulingData& data) {
+void to_json(json &j, const SchedulingData &data) {
     j = json{
         {"lecturers", data.lecturers},
         {"groups", data.groups},
@@ -170,198 +170,49 @@ void to_json(json& j, const SchedulingData& data) {
     };
 }
 
-void from_json(const json& j, SchedulingData& data) {
-    data.lecturers = j.at("lecturers").get<std::vector<Lecturer>>();
-    data.groups = j.at("groups").get<std::vector<StudentGroup>>();
-    data.rooms = j.at("rooms").get<std::vector<Room>>();
-    data.courses = j.at("courses").get<std::vector<Course>>();
+void from_json(const json &j, SchedulingData &data) {
+    data.lecturers = j.at("lecturers").get<std::vector<Lecturer> >();
+    data.groups = j.at("groups").get<std::vector<StudentGroup> >();
+    data.rooms = j.at("rooms").get<std::vector<Room> >();
+    data.courses = j.at("courses").get<std::vector<Course> >();
 }
 
-// // Utility class for JSON file operations
-// class SchedulingDataSerializer {
-// public:
-//     // Save SchedulingData to JSON file
-//     static bool saveToFile(const SchedulingData& data, const std::string& filename) {
-//         try {
-//             json j = data;
-//             std::ofstream file(filename);
-//             if (!file.is_open()) {
-//                 std::cerr << "Error: Could not open file " << filename << " for writing." << std::endl;
-//                 return false;
-//             }
-//             file << j.dump(4); // Pretty print with 4 spaces indentation
-//             file.close();
-//             std::cout << "Successfully saved scheduling data to " << filename << std::endl;
-//             return true;
-//         } catch (const std::exception& e) {
-//             std::cerr << "Error saving to JSON: " << e.what() << std::endl;
-//             return false;
-//         }
-//     }
-//
-//     // Load SchedulingData from JSON file
-//     static bool loadFromFile(SchedulingData& data, const std::string& filename) {
-//         try {
-//             std::ifstream file(filename);
-//             if (!file.is_open()) {
-//                 std::cerr << "Error: Could not open file " << filename << " for reading." << std::endl;
-//                 return false;
-//             }
-//             json j;
-//             file >> j;
-//             file.close();
-//             data = j.get<SchedulingData>();
-//             std::cout << "Successfully loaded scheduling data from " << filename << std::endl;
-//             return true;
-//         } catch (const std::exception& e) {
-//             std::cerr << "Error loading from JSON: " << e.what() << std::endl;
-//             return false;
-//         }
-//     }
-//
-//     // Convert SchedulingData to JSON string
-//     static std::string toJsonString(const SchedulingData& data, bool pretty = true) {
-//         try {
-//             json j = data;
-//             return pretty ? j.dump(4) : j.dump();
-//         } catch (const std::exception& e) {
-//             std::cerr << "Error converting to JSON string: " << e.what() << std::endl;
-//             return "";
-//         }
-//     }
-//
-//     // Parse SchedulingData from JSON string
-//     static bool fromJsonString(SchedulingData& data, const std::string& jsonStr) {
-//         try {
-//             json j = json::parse(jsonStr);
-//             data = j.get<SchedulingData>();
-//             return true;
-//         } catch (const std::exception& e) {
-//             std::cerr << "Error parsing JSON string: " << e.what() << std::endl;
-//             return false;
-//         }
-//     }
-//
-//     // Validate loaded data
-//     static bool validateData(const SchedulingData& data) {
-//         // Check for valid IDs
-//         std::unordered_set<int> lecturer_ids, group_ids, room_ids, course_ids;
-//
-//         for (const auto& lecturer : data.lecturers) {
-//             if (lecturer_ids.count(lecturer.id) > 0) {
-//                 std::cerr << "Duplicate lecturer ID: " << lecturer.id << std::endl;
-//                 return false;
-//             }
-//             lecturer_ids.insert(lecturer.id);
-//         }
-//
-//         for (const auto& group : data.groups) {
-//             if (group_ids.count(group.id) > 0) {
-//                 std::cerr << "Duplicate group ID: " << group.id << std::endl;
-//                 return false;
-//             }
-//             group_ids.insert(group.id);
-//         }
-//
-//         for (const auto& room : data.rooms) {
-//             if (room_ids.count(room.id) > 0) {
-//                 std::cerr << "Duplicate room ID: " << room.id << std::endl;
-//                 return false;
-//             }
-//             room_ids.insert(room.id);
-//         }
-//
-//         for (const auto& course : data.courses) {
-//             if (course_ids.count(course.id) > 0) {
-//                 std::cerr << "Duplicate course ID: " << course.id << std::endl;
-//                 return false;
-//             }
-//             course_ids.insert(course.id);
-//
-//             // Validate foreign keys
-//             if (lecturer_ids.count(course.lecturer_id) == 0) {
-//                 std::cerr << "Invalid lecturer ID " << course.lecturer_id
-//                          << " in course " << course.name << std::endl;
-//                 return false;
-//             }
-//
-//             for (int group_id : course.group_ids) {
-//                 if (group_ids.count(group_id) == 0) {
-//                     std::cerr << "Invalid group ID " << group_id
-//                              << " in course " << course.name << std::endl;
-//                     return false;
-//                 }
-//             }
-//         }
-//
-//         return true;
-//     }
-// };
-//
-// // Additional utility for saving/loading schedules (solutions)
-// class ScheduleSerializer {
-// public:
-//     struct SerializedSchedule {
-//         std::vector<Assignment> assignments;
-//         double fitness;
-//         int hard_violations;
-//         int soft_violations;
-//     };
-//
-//     static json scheduleToJson(const Schedule& schedule) {
-//         return json{
-//             {"assignments", schedule.assignments},
-//             {"fitness", schedule.fitness},
-//             {"hard_violations", schedule.hard_violations},
-//             {"soft_violations", schedule.soft_violations}
-//         };
-//     }
-//
-//     static bool saveScheduleToFile(const Schedule& schedule, const std::string& filename) {
-//         try {
-//             json j = scheduleToJson(schedule);
-//             std::ofstream file(filename);
-//             if (!file.is_open()) {
-//                 std::cerr << "Error: Could not open file " << filename << " for writing." << std::endl;
-//                 return false;
-//             }
-//             file << j.dump(4);
-//             file.close();
-//             std::cout << "Successfully saved schedule to " << filename << std::endl;
-//             return true;
-//         } catch (const std::exception& e) {
-//             std::cerr << "Error saving schedule: " << e.what() << std::endl;
-//             return false;
-//         }
-//     }
-//
-//     static bool loadScheduleFromFile(Schedule& schedule, const std::string& filename) {
-//         try {
-//             std::ifstream file(filename);
-//             if (!file.is_open()) {
-//                 std::cerr << "Error: Could not open file " << filename << " for reading." << std::endl;
-//                 return false;
-//             }
-//             json j;
-//             file >> j;
-//             file.close();
-//
-//             schedule.clear();
-//             for (const auto& assignment_json : j.at("assignments")) {
-//                 Assignment a = assignment_json.get<Assignment>();
-//                 schedule.addAssignment(a);
-//             }
-//             schedule.fitness = j.at("fitness").get<double>();
-//             schedule.hard_violations = j.at("hard_violations").get<int>();
-//             schedule.soft_violations = j.at("soft_violations").get<int>();
-//
-//             std::cout << "Successfully loaded schedule from " << filename << std::endl;
-//             return true;
-//         } catch (const std::exception& e) {
-//             std::cerr << "Error loading schedule: " << e.what() << std::endl;
-//             return false;
-//         }
-//     }
-// };
+bool saveToFile(const SchedulingData &data, const std::string &filename) {
+    try {
+        json j = data;
+        std::ofstream file(filename);
+        if (!file.is_open()) {
+            std::cerr << "Error: Could not open file " << filename << " for writing." << std::endl;
+            return false;
+        }
+        file << j.dump(4); // Pretty print with 4 spaces indentation
+        file.close();
+        std::cout << "Successfully saved scheduling data to " << filename << std::endl;
+        return true;
+    } catch (const std::exception &e) {
+        printf("Error saving to JSON: %s\n", e.what());
+        return false;
+    }
+}
 
-#endif // SCHEDULING_JSON_H
+bool loadFromFile(SchedulingData &data, const std::string &filename) {
+    try {
+        std::ifstream file(filename);
+        if (!file.is_open()) {
+            printf("Error: Could not open file %s for reading\n", filename.c_str());
+            return false;
+        }
+        json j;
+        file >> j;
+        file.close();
+        data = j.get<SchedulingData>();
+
+        printf("Successfully loaded scheduling data from %s\n", filename.c_str());
+        return true;
+    } catch (const std::exception &e) {
+        printf("Error loading from JSON: %s\n", e.what());
+        return false;
+    }
+}
+
+#endif // SCHEDULING_DATA_SERIALIZATION_H

@@ -5,27 +5,14 @@
 #include "schedule.h"
 #include "scheduling_data_generator.h"
 #include "cpls_scheduler.h"
-
-SchedulingData generateRandomSchedulingData(
-    int num_lecturers = 10,
-    int num_groups = 12,
-    int num_rooms = 8,
-    int num_courses = 20,
-    unsigned int seed = 0  // 0 means use time-based seed
-) {
-    SchedulingDataGenerator generator(seed == 0 ? std::chrono::steady_clock::now().time_since_epoch().count() : seed);
-    return generator.generateData(num_lecturers, num_groups, num_rooms, num_courses);
-}
+#include "scheduling_data_serialization.h"
 
 // Example usage
 int main() {
-    // Generate random data
-    SchedulingData data = generateRandomSchedulingData(
-        150,  // lecturers
-        200,  // student groups
-        120,  // rooms
-        300   // courses
-    );
+    std::string file_name = "../data/scheduling-data-1.json";
+
+    SchedulingData data;
+    loadFromFile(data, file_name);
 
     // Create scheduler
     CPLSScheduler scheduler(data.courses, data.rooms, data.lecturers, data.groups, 5, 8);  // 5 days, 8 periods per day
