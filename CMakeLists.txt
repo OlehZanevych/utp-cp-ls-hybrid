@@ -14,11 +14,8 @@ add_executable(schedule-generator main.cpp
         constraint_checker.h
         adaptive_neighborhood_selector.h
         adaptive_neighborhood_selector.cpp
-        scheduling_data_generator.h
-        scheduling_data_generator.cpp
         cpls_scheduler.h
         cpls_scheduler.cpp
-        test_data_generator.cpp
         scheduling_data_serialization.h)
 
 add_executable(input-data-generator test_data_generator.cpp

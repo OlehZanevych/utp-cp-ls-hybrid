@@ -107,7 +107,8 @@ std::vector<StudentGroup> SchedulingDataGenerator::generateStudentGroups(
 
     for (int i = 0; i < count; i++) {
         // Generate group name (e.g., "CS-1A", "CS-2B")
-        std::string name = "CS-" + std::to_string(current_year) + section;
+        // std::string name = "CS-" + std::to_string(current_year) + section;
+        std::string name = "CS-" + std::to_string(current_year) + std::to_string(i);
         int size = size_dist(rng);
 
         StudentGroup group(i, name, size);
@@ -208,94 +209,113 @@ std::vector<Room> SchedulingDataGenerator::generateRooms(int count, int num_grou
 
 std::vector<Course> SchedulingDataGenerator::generateCourses(int count, int num_lecturers, int num_groups,
                                                              double feature_prob) {
-    std::vector<Course> courses;
+   std::vector<Course> courses;
+    courses.reserve(count);
+
+    // Pre-generate all course names at once
+    auto generateUniqueNames = [this](int needed) -> std::vector<std::string> {
+        std::vector<std::string> names;
+        names.reserve(needed);
+
+        // Create index arrays for combinations
+        std::vector<std::pair<int, int>> combinations;
+        for (int p = 0; p < course_prefixes.size(); p++) {
+            for (int s = 0; s < course_subjects.size(); s++) {
+                combinations.push_back({p, s});
+            }
+        }
+
+        // Shuffle combinations
+        std::shuffle(combinations.begin(), combinations.end(), rng);
+
+        // Generate names from shuffled combinations
+        for (int i = 0; i < needed && i < combinations.size(); i++) {
+            names.push_back(course_prefixes[combinations[i].first] + " " +
+                          course_subjects[combinations[i].second]);
+        }
+
+        // Add numbered variants if needed
+        if (needed > combinations.size()) {
+            int suffix = 2;
+            size_t base_size = names.size();
+            while (names.size() < needed) {
+                for (size_t i = 0; i < base_size && names.size() < needed; i++) {
+                    names.push_back(names[i] + " " + std::to_string(suffix));
+                }
+                suffix++;
+            }
+        }
+
+        return names;
+    };
+
+    auto names = generateUniqueNames(count);
+
+    // Initialize distributions
     std::uniform_int_distribution<> lecturer_dist(0, num_lecturers - 1);
-    std::uniform_int_distribution<> duration_dist(1, 3); // 1-3 period duration
-    std::uniform_int_distribution<> meetings_dist(1, 3); // 1-3 meetings per week
+    std::uniform_int_distribution<> duration_dist(1, 3);
+    std::uniform_int_distribution<> meetings_dist(1, 3);
     std::uniform_real_distribution<> prob_dist(0.0, 1.0);
-    std::uniform_int_distribution<> num_groups_dist(1, 3); // 1-3 groups per course
+    std::uniform_int_distribution<> num_groups_dist(1, std::min(3, num_groups));
 
-    std::unordered_set<std::string> used_names;
-
-    // Track course load per lecturer
+    // Track lecturer loads
     std::vector<int> lecturer_load(num_lecturers, 0);
 
+    // Pre-calculate groups per year
+    const int groups_per_year = (num_groups + 3) / 4;
+
+    // Batch process courses
     for (int i = 0; i < count; i++) {
-        // Generate unique course name
-        std::string name;
-        do {
-            std::string prefix = course_prefixes[std::uniform_int_distribution<>(0, course_prefixes.size() - 1)(rng)];
-            std::string subject = course_subjects[std::uniform_int_distribution<>(0, course_subjects.size() - 1)(rng)];
-            name = prefix + " " + subject;
-        } while (used_names.find(name) != used_names.end());
-
-        used_names.insert(name);
-
-        // Assign to lecturer with lower load
+        // Select lecturer (with load balancing)
         int lecturer_id = lecturer_dist(rng);
-        // 30% chance to reassign to lecturer with lowest load
-        if (prob_dist(rng) < 0.3) {
+        if (i % 10 == 0) { // Check load balance every 10 courses
             auto min_it = std::min_element(lecturer_load.begin(), lecturer_load.end());
-            lecturer_id = std::distance(lecturer_load.begin(), min_it);
+            if (lecturer_load[lecturer_id] > *min_it + 5) {
+                lecturer_id = std::distance(lecturer_load.begin(), min_it);
+            }
         }
 
         int duration = duration_dist(rng);
-        int meetings = meetings_dist(rng);
+        int meetings = (duration == 3) ? std::min(meetings_dist(rng), 2) : meetings_dist(rng);
 
-        // Longer courses typically meet less frequently
-        if (duration == 3) {
-            meetings = std::min(meetings, 2);
-        }
-
-        Course course(i, name, lecturer_id, duration, meetings);
+        Course course(i, names[i], lecturer_id, duration, meetings);
         lecturer_load[lecturer_id] += duration * meetings;
 
-        // Add features
+        // Simplified feature assignment based on name patterns
         if (prob_dist(rng) < feature_prob) {
-            // Certain subjects more likely to need projector
-            if (name.find("Graphics") != std::string::npos ||
-                name.find("Vision") != std::string::npos ||
-                name.find("AI") != std::string::npos ||
+            const std::string& name_lower = names[i];
+            if (name_lower.find("Graphics") != std::string::npos ||
+                name_lower.find("Vision") != std::string::npos ||
+                name_lower.find("AI") != std::string::npos ||
                 prob_dist(rng) < 0.5) {
-                course.required_features.push_back(1); // Projector
+                course.required_features.push_back(1);
             }
 
-            // Lab courses need lab equipment
-            if (name.find("Programming") != std::string::npos ||
-                name.find("Networks") != std::string::npos ||
-                name.find("Operating") != std::string::npos ||
+            if (name_lower.find("Programming") != std::string::npos ||
+                name_lower.find("Networks") != std::string::npos ||
+                name_lower.find("Operating") != std::string::npos ||
                 prob_dist(rng) < 0.2) {
-                course.required_features.push_back(2); // Lab equipment
+                course.required_features.push_back(2);
             }
         }
 
-        // Assign groups (try to keep same-year groups together)
-        int num_groups_for_course = std::min(num_groups_dist(rng), num_groups);
-        std::unordered_set<int> assigned_groups;
+        // Fast group assignment
+        int num_groups_for_course = num_groups_dist(rng);
+        if (num_groups_for_course > 0 && num_groups > 0) {
+            // Direct random selection without complex logic
+            std::uniform_int_distribution<> group_select(0, num_groups - 1);
+            std::unordered_set<int> selected;
 
-        // First, try to assign groups from the same year
-        int start_group = std::uniform_int_distribution<>(0, num_groups - 1)(rng);
-        int groups_per_year = (num_groups + 3) / 4;
-        int year_start = (start_group / groups_per_year) * groups_per_year;
-
-        for (int j = 0; j < num_groups_for_course && assigned_groups.size() < num_groups_for_course; j++) {
-            int group_id = year_start + (j % groups_per_year);
-            if (group_id < num_groups) {
-                course.addGroup(group_id);
-                assigned_groups.insert(group_id);
+            course.group_ids.reserve(num_groups_for_course);
+            while (selected.size() < num_groups_for_course) {
+                int group_id = group_select(rng);
+                if (selected.insert(group_id).second) {
+                    course.addGroup(group_id);
+                }
             }
         }
 
-        // If we need more groups, add random ones
-        while (assigned_groups.size() < num_groups_for_course) {
-            int group_id = std::uniform_int_distribution<>(0, num_groups - 1)(rng);
-            if (assigned_groups.find(group_id) == assigned_groups.end()) {
-                course.addGroup(group_id);
-                assigned_groups.insert(group_id);
-            }
-        }
-
-        courses.push_back(course);
+        courses.push_back(std::move(course));
     }
 
     return courses;
